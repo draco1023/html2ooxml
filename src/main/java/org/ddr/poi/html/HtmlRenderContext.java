@@ -107,6 +107,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -1234,7 +1235,7 @@ public class HtmlRenderContext extends RenderContext<String> {
         if (isElement) {
             Element element = ((Element) node);
             renderElement(element);
-        } else if (node instanceof TextNode) {
+        } else if (node instanceof TextNode && !"tr".equals(node.parent().nodeName())) {
             renderText(((TextNode) node).getWholeText());
         }
     }
@@ -1279,8 +1280,8 @@ public class HtmlRenderContext extends RenderContext<String> {
                 XWPFTable xwpfTable = container.insertNewTbl(globalCursor);
                 globalCursor.pop();
                 if (dedupeParagraph != null && !numberingContext.contains(dedupeParagraph)) {
-                    if (!dedupeParagraph.equals(getRun().getParent()) && isEmptyParagraph(dedupeParagraph)) {
-                        removeParagraph(container, dedupeParagraph);
+                    if (!dedupeParagraph.equals(getRun().getParent())) {
+                        tryRemoveParagraph(container);
                     }
                     unmarkDedupe();
                 }
@@ -1328,17 +1329,25 @@ public class HtmlRenderContext extends RenderContext<String> {
         renderElementEnd(element, this, elementRenderer, blocked);
     }
 
-    private boolean isEmptyParagraph(XWPFParagraph paragraph) {
-        for (XWPFRun run : paragraph.getRuns()) {
-            if (StringUtils.isNotBlank(run.text())) {
-                return false;
-            }
-            if (!run.getEmbeddedPictures().isEmpty()) {
-                return false;
+    private void tryRemoveParagraph(IBody container) {
+        System.out.println("tryRemoveParagraph");
+        List<XWPFRun> runs = dedupeParagraph.getRuns();
+        int size = runs.size();
+        if (size == 0) {
+            this.removeParagraph(container, dedupeParagraph);
+            return;
+        }
+        int index = runs.size() - 1;
+        XWPFRun run = runs.get(index);
+        String text = run.text();
+        if ((text.isEmpty() || "\n".equals(text)) && run.getEmbeddedPictures().isEmpty()) {
+            CTP ctp = dedupeParagraph.getCTP();
+            if (size == 1 && ctp.sizeOfOMathArray() == 0 && ctp.sizeOfOMathParaArray() == 0) {
+                this.removeParagraph(container, dedupeParagraph);
+            } else {
+                dedupeParagraph.removeRun(index);
             }
         }
-        CTP ctp = paragraph.getCTP();
-        return ctp.sizeOfOMathArray() == 0 && ctp.sizeOfOMathParaArray() == 0;
     }
 
     private void removeParagraph(IBody container, XWPFParagraph paragraph) {

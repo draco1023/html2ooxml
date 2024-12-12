@@ -103,7 +103,7 @@ public class ImageRenderer implements ElementRenderer {
      * @param context 渲染上下文
      * @param src 数据
      */
-    private void handleData(Element element, HtmlRenderContext context, String src) {
+    protected void handleData(Element element, HtmlRenderContext context, String src) {
         int index = src.indexOf(HtmlConstants.COMMA.charAt(0));
         String data = src.substring(index + 1);
         String declaration = src.substring(0, index);
@@ -178,7 +178,7 @@ public class ImageRenderer implements ElementRenderer {
      * @param context 渲染上下文
      * @param src 图片链接地址
      */
-    private void handleRemoteImage(Element element, HtmlRenderContext context, String src) {
+    protected void handleRemoteImage(Element element, HtmlRenderContext context, String src) {
         HttpURLConnection connect = null;
         try {
             connect = HttpURLConnectionUtils.connect(src);
@@ -203,7 +203,7 @@ public class ImageRenderer implements ElementRenderer {
         }
     }
 
-    private ImageInfo analyzeImage(ByteArrayInputStream inputStream, boolean svg) throws IOException, InvalidFormatException {
+    protected ImageInfo analyzeImage(ByteArrayInputStream inputStream, boolean svg) throws IOException, InvalidFormatException {
         final long length = inputStream.available();
         // actual image data stream
         ByteArrayInputStream stream = inputStream;
